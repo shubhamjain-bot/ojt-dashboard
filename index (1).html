@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OJT Tracker Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --navy:    #0F1F3D;
+  --navy2:   #162847;
+  --gold:    #C8973A;
+  --gold2:   #E8B660;
+  --ph1:     #3B82F6;
+  --ph2:     #10B981;
+  --ph3:     #F59E0B;
+  --ph4:     #EF4444;
+  --done:    #6B7280;
+  --bg:      #0A1628;
+  --card:    #111E35;
+  --card2:   #162642;
+  --border:  #1E3054;
+  --text:    #E2E8F0;
+  --muted:   #8FA3C0;
+  --white:   #FFFFFF;
+  --radius:  12px;
+  --shadow:  0 4px 24px rgba(0,0,0,0.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  font-size:14px;
+  line-height:1.6;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;
+}
+
+/* ── TOP BAR ── */
+.topbar{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
+  border-bottom:2px solid var(--gold);
+  padding:18px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 20px rgba(0,0,0,0.5);
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.logo{
+  width:42px;height:42px;border-radius:10px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--navy);
+}
+.brand h1{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--white);letter-spacing:-0.3px}
+.brand p{font-size:11px;color:var(--gold2);font-weight:300;letter-spacing:1px;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.today-badge{
+  background:rgba(200,151,58,0.12);border:1px solid rgba(200,151,58,0.3);
+  padding:6px 14px;border-radius:20px;
+  font-size:12px;color:var(--gold2);font-weight:500;
+}
+.sync-btn{
+  background:var(--gold);color:var(--navy);
+  border:none;padding:8px 18px;border-radius:8px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:12px;
+  cursor:pointer;letter-spacing:0.5px;
+  transition:all .2s;
+}
+.sync-btn:hover{background:var(--gold2);transform:translateY(-1px)}
+
+/* ── MAIN LAYOUT ── */
+.main{padding:28px 32px;position:relative;z-index:1;max-width:1600px;margin:0 auto}
+
+/* ── SECTION TITLE ── */
+.section-title{
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:600;
+  color:var(--gold);letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── KPI STRIP ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px}
+.kpi{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;position:relative;overflow:hidden;
+  transition:transform .2s,border-color .2s;
+  cursor:default;
+}
+.kpi:hover{transform:translateY(-2px);border-color:var(--gold)}
+.kpi::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--accent,var(--gold));
+}
+.kpi-val{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--white);line-height:1}
+.kpi-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.8px}
+.kpi-sub{font-size:12px;color:var(--accent,var(--gold));margin-top:6px;font-weight:500}
+
+/* ── 2-COL GRID ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:28px}
+
+/* ── CARD ── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:22px;
+  box-shadow:var(--shadow);
+}
+.card-title{
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  color:var(--white);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-title .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+
+/* ── PHASE LEGEND ── */
+.phase-legend{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.phase-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  color:var(--muted);
+}
+.phase-pill .dot{width:8px;height:8px;border-radius:50%}
+
+/* ── RM TABLE ── */
+.rm-table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{
+  font-family:'Syne',sans-serif;font-size:10px;font-weight:600;
+  text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  text-align:left;white-space:nowrap;
+}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background .15s}
+tbody tr:hover{background:rgba(200,151,58,0.05)}
+tbody td{padding:12px 14px;font-size:13px;vertical-align:middle}
+.rm-name{font-weight:500;color:var(--white)}
+.rm-region{font-size:11px;color:var(--muted)}
+
+/* ── PHASE BAR ── */
+.phase-bar-wrap{display:flex;gap:2px;align-items:center;min-width:160px}
+.phase-seg{
+  height:8px;border-radius:2px;transition:width .4s;
+  position:relative;cursor:help;
+}
+.phase-seg:first-child{border-radius:4px 0 0 4px}
+.phase-seg:last-child{border-radius:0 4px 4px 0}
+.empty-seg{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;flex:1}
+
+/* ── BADGE ── */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;
+  white-space:nowrap;
+}
+.badge-ph1{background:rgba(59,130,246,0.15);color:#60A5FA;border:1px solid rgba(59,130,246,0.3)}
+.badge-ph2{background:rgba(16,185,129,0.15);color:#34D399;border:1px solid rgba(16,185,129,0.3)}
+.badge-ph3{background:rgba(245,158,11,0.15);color:#FCD34D;border:1px solid rgba(245,158,11,0.3)}
+.badge-ph4{background:rgba(239,68,68,0.15);color:#F87171;border:1px solid rgba(239,68,68,0.3)}
+.badge-done{background:rgba(107,114,128,0.15);color:#9CA3AF;border:1px solid rgba(107,114,128,0.3)}
+.badge-pend{background:rgba(200,151,58,0.15);color:var(--gold2);border:1px solid rgba(200,151,58,0.3)}
+
+/* ── PENDENCY RING ── */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ring{position:relative;width:56px;height:56px}
+.ring svg{width:56px;height:56px;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:5}
+.ring-fill{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .5s}
+.ring-text{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white);
+}
+.ring-label{font-size:10px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:0.5px}
+
+/* ── PENDENCY ALERT BANNER ── */
+.alert-banner{
+  background:linear-gradient(90deg,rgba(239,68,68,0.12),rgba(239,68,68,0.04));
+  border:1px solid rgba(239,68,68,0.25);border-left:3px solid #EF4444;
+  border-radius:var(--radius);padding:14px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;
+}
+.alert-banner .alert-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#F87171}
+.alert-banner .alert-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ── TRAINEE TABLE ── */
+.trainee-filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-btn{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  color:var(--muted);padding:6px 14px;border-radius:20px;
+  font-size:11px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;
+}
+.filter-btn:hover,.filter-btn.active{
+  background:rgba(200,151,58,0.15);border-color:var(--gold);color:var(--gold2);
+}
+.search-box{
+  margin-left:auto;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);color:var(--text);
+  padding:6px 14px;border-radius:20px;font-size:12px;
+  font-family:'DM Sans',sans-serif;outline:none;width:200px;
+  transition:border-color .2s;
+}
+.search-box:focus{border-color:var(--gold)}
+.search-box::placeholder{color:var(--muted)}
+
+/* ── PROGRESS ── */
+.progress-outer{width:100%;background:rgba(255,255,255,0.06);border-radius:4px;height:6px;overflow:hidden}
+.progress-inner{height:100%;border-radius:4px;transition:width .4s}
+
+/* ── DAY PILL ── */
+.day-pill{
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+  background:rgba(255,255,255,0.08);border:1px solid var(--border);
+  padding:2px 8px;border-radius:6px;color:var(--white);
+}
+
+/* ── RM SUMMARY CARDS ── */
+.rm-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:28px}
+.rm-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;
+  position:relative;overflow:hidden;transition:border-color .2s;
+}
+.rm-card:hover{border-color:rgba(200,151,58,0.4)}
+.rm-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.rm-card-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--white)}
+.rm-card-region{font-size:11px;color:var(--muted);margin-top:2px}
+.rm-card-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.rm-stat{text-align:center;padding:8px 4px;background:rgba(255,255,255,0.03);border-radius:8px}
+.rm-stat-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+.rm-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+.rm-card-bar{margin-top:14px}
+.rm-card-bar-label{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;color:var(--muted)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;background:rgba(255,255,255,0.04);
+  border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content}
+.tab{
+  padding:7px 18px;border-radius:7px;font-size:12px;
+  font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;
+  color:var(--muted);transition:all .2s;border:none;background:transparent;
+}
+.tab.active{background:var(--card2);color:var(--white);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){.kpi-strip{grid-template-columns:repeat(3,1fr)}.grid2,.grid3{grid-template-columns:1fr}}
+@media(max-width:700px){.topbar{padding:14px 16px}.main{padding:16px}.kpi-strip{grid-template-columns:1fr 1fr}}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .4s ease both}
+.fade-up:nth-child(1){animation-delay:.05s}
+.fade-up:nth-child(2){animation-delay:.1s}
+.fade-up:nth-child(3){animation-delay:.15s}
+.fade-up:nth-child(4){animation-delay:.2s}
+.fade-up:nth-child(5){animation-delay:.25s}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ TOP BAR ════════════════ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">OJT</div>
+    <div class="brand">
+      <h1>OJT Tracker Dashboard</h1>
+      <p>Regional Manager Performance &amp; Pendency Monitor</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="today-badge" id="todayBadge">—</div>
+    <button class="sync-btn" onclick="renderAll()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- ════════════════ MAIN ════════════════ -->
+<div class="main">
+
+  <!-- KPI STRIP -->
+  <div class="section-title">Overall Summary</div>
+  <div class="kpi-strip" id="kpiStrip"></div>
+
+  <!-- ALERT BANNER -->
+  <div id="alertBanner"></div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('rm',this)">RM-wise View</button>
+    <button class="tab" onclick="switchTab('trainee',this)">Trainee Detail</button>
+  </div>
+
+  <!-- RM VIEW -->
+  <div id="tab-rm">
+    <div class="section-title">Regional Manager Summary</div>
+    <div class="rm-summary-grid" id="rmSummaryGrid"></div>
+
+    <div class="section-title">Pendency &amp; Progress — RM Table</div>
+    <div class="card">
+      <div class="rm-table-wrap">
+        <table id="rmTable">
+          <thead>
+            <tr>
+              <th>Regional Manager</th>
+              <th>Region</th>
+              <th>Total Trainees</th>
+              <th>Phase Breakdown</th>
+              <th>Phase Progress</th>
+              <th>Completed</th>
+              <th>Pending</th>
+              <th>Overdue Risk</th>
+              <th>Avg Day</th>
+              <th>Completion %</th>
+            </tr>
+          </thead>
+          <tbody id="rmTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAINEE VIEW -->
+  <div id="tab-trainee" style="display:none">
+    <div class="section-title">Trainee-level Detail</div>
+    <div class="card">
+      <div class="trainee-filters" id="traineeFilters">
+        <button class="filter-btn active" onclick="filterTrainees('all',this)">All</button>
+        <button class="filter-btn" onclick="filterTrainees('ph1',this)">Phase 1</button>
+        <button class="filter-btn" onclick="filterTrainees('ph2',this)">Phase 2</button>
+        <button class="filter-btn" onclick="filterTrainees('ph3',this)">Phase 3</button>
+        <button class="filter-btn" onclick="filterTrainees('ph4',this)">Phase 4</button>
+        <button class="filter-btn" onclick="filterTrainees('done',this)">Completed</button>
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search trainee / RM / region…" oninput="renderTraineeTable()"/>
+      </div>
+      <div class="rm-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Trainee Name</th>
+              <th>Emp ID</th>
+              <th>Regional Manager</th>
+              <th>Region</th>
+              <th>Joining Date</th>
+              <th>Day #</th>
+              <th>Current Phase</th>
+              <th>OJT Progress</th>
+              <th>Ph1 End</th>
+              <th>Ph2 End</th>
+              <th>Ph3 End</th>
+              <th>Completion</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="traineeTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ════════════════ DATA & LOGIC ════════════════ -->
+<script>
+// ══════════════════════════════════════════════
+//  EDIT THIS DATA TO UPDATE YOUR DASHBOARD
+// ══════════════════════════════════════════════
+const RM_DATA = [
+  { id:'rm1', name:'Rajesh Kumar',    region:'North' },
+  { id:'rm2', name:'Priya Sharma',    region:'South' },
+  { id:'rm3', name:'Amit Desai',      region:'West'  },
+  { id:'rm4', name:'Sunita Patil',    region:'East'  },
+  { id:'rm5', name:'Vikram Nair',     region:'Central'},
+];
+
+// Joining dates are YYYY-MM-DD
+// status: "active" (still in OJT) | "completed" (manual override)
+const TRAINEE_DATA = [
+  // ── North / Rajesh Kumar ──────────────────────────────────
+  { name:'Aakash Mehta',    empId:'EMP001', rm:'rm1', joiningDate:'2025-03-01' },
+  { name:'Divya Rao',       empId:'EMP002', rm:'rm1', joiningDate:'2025-03-08' },
+  { name:'Farhan Sheikh',   empId:'EMP003', rm:'rm1', joiningDate:'2025-03-15' },
+  { name:'Geeta Iyer',      empId:'EMP004', rm:'rm1', joiningDate:'2025-04-01' },
+  { name:'Harpreet Singh',  empId:'EMP005', rm:'rm1', joiningDate:'2025-04-10' },
+  { name:'Imran Ali',       empId:'EMP006', rm:'rm1', joiningDate:'2025-04-20' },
+
+  // ── South / Priya Sharma ─────────────────────────────────
+  { name:'Jaya Krishnan',   empId:'EMP007', rm:'rm2', joiningDate:'2025-02-15' },
+  { name:'Karan Patel',     empId:'EMP008', rm:'rm2', joiningDate:'2025-03-01' },
+  { name:'Lalitha Bose',    empId:'EMP009', rm:'rm2', joiningDate:'2025-03-10' },
+  { name:'Manish Tiwari',   empId:'EMP010', rm:'rm2', joiningDate:'2025-04-05' },
+  { name:'Nandita Roy',     empId:'EMP011', rm:'rm2', joiningDate:'2025-04-18' },
+
+  // ── West / Amit Desai ────────────────────────────────────
+  { name:'Om Prakash',      empId:'EMP012', rm:'rm3', joiningDate:'2025-01-20' },
+  { name:'Pooja Joshi',     empId:'EMP013', rm:'rm3', joiningDate:'2025-02-10' },
+  { name:'Rahul Verma',     empId:'EMP014', rm:'rm3', joiningDate:'2025-03-05' },
+  { name:'Sneha Kulkarni',  empId:'EMP015', rm:'rm3', joiningDate:'2025-03-20' },
+  { name:'Tarun Malhotra',  empId:'EMP016', rm:'rm3', joiningDate:'2025-04-12' },
+
+  // ── East / Sunita Patil ──────────────────────────────────
+  { name:'Uma Shankar',     empId:'EMP017', rm:'rm4', joiningDate:'2025-02-01' },
+  { name:'Vikas Gupta',     empId:'EMP018', rm:'rm4', joiningDate:'2025-02-25' },
+  { name:'Wasim Khan',      empId:'EMP019', rm:'rm4', joiningDate:'2025-03-18' },
+  { name:'Yamini Reddy',    empId:'EMP020', rm:'rm4', joiningDate:'2025-04-08' },
+
+  // ── Central / Vikram Nair ────────────────────────────────
+  { name:'Zara Kapoor',     empId:'EMP021', rm:'rm5', joiningDate:'2025-01-10' },
+  { name:'Ajay Shetty',     empId:'EMP022', rm:'rm5', joiningDate:'2025-02-05' },
+  { name:'Bhavna Chawla',   empId:'EMP023', rm:'rm5', joiningDate:'2025-03-14' },
+  { name:'Chirag Pandey',   empId:'EMP024', rm:'rm5', joiningDate:'2025-04-01' },
+  { name:'Deepak Sawant',   empId:'EMP025', rm:'rm5', joiningDate:'2025-04-22' },
+];
+// ══════════════════════════════════════════════
+
+const PHASES = [
+  { key:'ph1', label:'Phase 1', color:'var(--ph1)', days:[1,7]   },
+  { key:'ph2', label:'Phase 2', color:'var(--ph2)', days:[8,30]  },
+  { key:'ph3', label:'Phase 3', color:'var(--ph3)', days:[31,45] },
+  { key:'ph4', label:'Phase 4', color:'var(--ph4)', days:[46,60] },
+];
+
+let activeFilter = 'all';
+
+// ── Computed trainee data ──────────────────────────────────
+function computeTrainees() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return TRAINEE_DATA.map(t => {
+    const rm = RM_DATA.find(r => r.id === t.rm) || {};
+    const jd = new Date(t.joiningDate); jd.setHours(0,0,0,0);
+    const dayNum = Math.max(1, Math.min(60, Math.floor((today - jd) / 86400000) + 1));
+    const pct = Math.min(100, Math.round((dayNum / 60) * 100));
+    const isCompleted = today > new Date(jd.getTime() + 59 * 86400000);
+    let phase, phaseKey;
+    if (isCompleted)      { phase = '✅ Completed';          phaseKey = 'done'; }
+    else if (dayNum <= 7)  { phase = 'Phase 1 – Foundation';  phaseKey = 'ph1'; }
+    else if (dayNum <= 30) { phase = 'Phase 2 – Internship';  phaseKey = 'ph2'; }
+    else if (dayNum <= 45) { phase = 'Phase 3 – Advanced';    phaseKey = 'ph3'; }
+    else                   { phase = 'Phase 4 – Ownership';   phaseKey = 'ph4'; }
+
+    const ph1End   = new Date(jd.getTime() + 6  * 86400000);
+    const ph2End   = new Date(jd.getTime() + 29 * 86400000);
+    const ph3End   = new Date(jd.getTime() + 44 * 86400000);
+    const complete = new Date(jd.getTime() + 59 * 86400000);
+
+    // Overdue: been more than 65 days (5 day buffer exceeded)
+    const daysElapsed = Math.floor((today - jd) / 86400000) + 1;
+    const overdue = !isCompleted && daysElapsed > 65;
+
+    return { ...t, rm: rm, dayNum, pct, phase, phaseKey, isCompleted, overdue,
+      ph1End, ph2End, ph3End, complete, jd };
+  });
+}
+
+// ── RM aggregation ─────────────────────────────────────────
+function computeRMs(trainees) {
+  return RM_DATA.map(rm => {
+    const list = trainees.filter(t => t.rm.id === rm.id);
+    const byPhase = { ph1:0, ph2:0, ph3:0, ph4:0, done:0 };
+    list.forEach(t => byPhase[t.phaseKey]++);
+    const completed = byPhase.done;
+    const active = list.length - completed;
+    const overdue = list.filter(t => t.overdue).length;
+    const avgDay = list.length ? Math.round(list.reduce((s,t)=>s+t.dayNum,0)/list.length) : 0;
+    const compPct = list.length ? Math.round((completed/list.length)*100) : 0;
+    const pending = active; // active = still in OJT = pending completion
+    return { ...rm, list, byPhase, completed, active, overdue, avgDay, compPct, pending, total:list.length };
+  });
+}
+
+// ── Formatters ─────────────────────────────────────────────
+const fmt = d => d instanceof Date ? d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+function phaseColor(key){ return {ph1:'var(--ph1)',ph2:'var(--ph2)',ph3:'var(--ph3)',ph4:'var(--ph4)',done:'var(--done)'}[key]||'var(--muted)' }
+function phaseBadge(key,label){
+  const cls={ph1:'badge-ph1',ph2:'badge-ph2',ph3:'badge-ph3',ph4:'badge-ph4',done:'badge-done'}[key]||'badge-done';
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+// ── KPI Strip ──────────────────────────────────────────────
+function renderKPI(trainees) {
+  const total    = trainees.length;
+  const done     = trainees.filter(t=>t.isCompleted).length;
+  const active   = total - done;
+  const overdue  = trainees.filter(t=>t.overdue).length;
+  const ph4      = trainees.filter(t=>t.phaseKey==='ph4').length;
+  const compPct  = total ? Math.round((done/total)*100) : 0;
+
+  const kpis = [
+    { val:total,   label:'Total Trainees',   sub:'Across all regions',   accent:'#60A5FA' },
+    { val:active,  label:'Active in OJT',    sub:'Currently in progress', accent:'#34D399' },
+    { val:done,    label:'Completed',         sub:`${compPct}% completion rate`, accent:'#10B981' },
+    { val:overdue, label:'Overdue / At Risk', sub:'Exceeded 65 days',     accent:'#F87171' },
+    { val:ph4,     label:'In Phase 4',        sub:'Near completion',       accent:'#FCD34D' },
+  ];
+  document.getElementById('kpiStrip').innerHTML = kpis.map(k=>`
+    <div class="kpi fade-up" style="--accent:${k.accent}">
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+// ── Alert Banner ───────────────────────────────────────────
+function renderAlert(trainees) {
+  const overdue = trainees.filter(t=>t.overdue);
+  const el = document.getElementById('alertBanner');
+  if (!overdue.length) { el.innerHTML=''; return; }
+  const names = overdue.slice(0,3).map(t=>t.name).join(', ');
+  el.innerHTML = `<div class="alert-banner">
+    <div>
+      <div class="alert-title">⚠️ ${overdue.length} Trainee${overdue.length>1?'s':''} Overdue / At Risk</div>
+      <div class="alert-sub">${names}${overdue.length>3?' + '+(overdue.length-3)+' more':''} — exceeded 65-day OJT window</div>
+    </div>
+    <span class="badge badge-ph4">Action Required</span>
+  </div>`;
+}
+
+// ── RM Summary Cards ───────────────────────────────────────
+function renderRMCards(rms) {
+  document.getElementById('rmSummaryGrid').innerHTML = rms.map(rm=>{
+    const pendPct = rm.total ? Math.round((rm.pending/rm.total)*100) : 0;
+    const overdueColor = rm.overdue > 0 ? '#F87171' : '#34D399';
+    return `<div class="rm-card fade-up">
+      <div class="rm-card-header">
+        <div>
+          <div class="rm-card-name">${rm.name}</div>
+          <div class="rm-card-region">📍 ${rm.region} Region</div>
+        </div>
+        ${rm.overdue ? `<span class="badge badge-ph4">⚠️ ${rm.overdue} overdue</span>` : `<span class="badge badge-ph2">✓ On Track</span>`}
+      </div>
+
+      <div class="rm-card-stats">
+        <div class="rm-stat">
+          <div class="rm-stat-val" style="color:#60A5FA">${rm.total}</div>
+          <div class="rm-stat-lbl">Total</div>
+        </div>
+        <div class="rm-stat">
+          <div class="rm-stat-val" style="color:#34D399">${rm.completed}</div>
+          <div class="rm-stat-lbl">Completed</div>
+        </div>
+        <div class="rm-stat">
+          <div class="rm-stat-val" style="color:var(--gold2)">${rm.pending}</div>
+          <div class="rm-stat-lbl">Pending</div>
+        </div>
+      </div>
+
+      <div class="rm-card-bar">
+        <div class="rm-card-bar-label">
+          <span>OJT Completion</span>
+          <span style="color:var(--gold2)">${rm.compPct}%</span>
+        </div>
+        <div class="progress-outer">
+          <div class="progress-inner" style="width:${rm.compPct}%;background:linear-gradient(90deg,var(--gold),var(--gold2))"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+        ${PHASES.map(p=>`
+          <span class="badge" style="background:rgba(0,0,0,0.2);color:${p.color};border:1px solid ${p.color}33;font-size:10px">
+            ${p.label.split(' ')[1]}: ${rm.byPhase[p.key]}
+          </span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── RM Table ───────────────────────────────────────────────
+function renderRMTable(rms) {
+  document.getElementById('rmTableBody').innerHTML = rms.map(rm=>{
+    // Phase bar
+    const total = rm.total || 1;
+    const segs = PHASES.map(p=>{
+      const w = Math.round((rm.byPhase[p.key]/total)*100);
+      return w > 0 ? `<div class="phase-seg" style="width:${w}%;background:${p.color}" title="${p.label}: ${rm.byPhase[p.key]}"></div>` : '';
+    }).join('');
+    const doneW = Math.round((rm.byPhase.done/total)*100);
+    const doneSeg = doneW > 0 ? `<div class="phase-seg" style="width:${doneW}%;background:var(--done)" title="Completed: ${rm.byPhase.done}"></div>` : '';
+
+    // Pendency ring
+    const pct = rm.compPct;
+    const r = 22, circ = 2*Math.PI*r;
+    const offset = circ - (pct/100)*circ;
+    const ringColor = pct >= 80 ? '#34D399' : pct >= 50 ? 'var(--gold)' : '#F87171';
+
+    return `<tr>
+      <td><div class="rm-name">${rm.name}</div></td>
+      <td><div class="rm-region">📍 ${rm.region}</div></td>
+      <td><span style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:#60A5FA">${rm.total}</span></td>
+      <td>
+        <div style="display:flex;gap:4px;font-size:10px;color:var(--muted);flex-wrap:wrap">
+          ${PHASES.map(p=>rm.byPhase[p.key]>0?`<span style="color:${p.color}">P${p.label.split(' ')[1][0]}:${rm.byPhase[p.key]}</span>`:'').join(' ')}
+          ${rm.byPhase.done>0?`<span style="color:var(--done)">✓:${rm.byPhase.done}</span>`:''}
+        </div>
+      </td>
+      <td>
+        <div class="phase-bar-wrap">${segs}${doneSeg}${!segs&&!doneSeg?'<div class="empty-seg"></div>':''}</div>
+      </td>
+      <td><span class="badge badge-done">✓ ${rm.completed}</span></td>
+      <td><span class="badge badge-pend">⏳ ${rm.pending}</span></td>
+      <td>${rm.overdue > 0
+        ? `<span class="badge badge-ph4">⚠️ ${rm.overdue}</span>`
+        : `<span class="badge badge-ph2">✓ None</span>`}</td>
+      <td><span class="day-pill">Day ${rm.avgDay}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress-outer" style="width:80px">
+            <div class="progress-inner" style="width:${pct}%;background:${ringColor}"></div>
+          </div>
+          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:${ringColor}">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Trainee Table ──────────────────────────────────────────
+function renderTraineeTable() {
+  const q = (document.getElementById('searchBox')?.value||'').toLowerCase();
+  const trainees = computeTrainees().filter(t=>{
+    const matchFilter = activeFilter==='all' || t.phaseKey===activeFilter;
+    const matchSearch = !q || [t.name,t.empId,t.rm.name,t.rm.region].some(v=>(v||'').toLowerCase().includes(q));
+    return matchFilter && matchSearch;
+  });
+
+  document.getElementById('traineeTableBody').innerHTML = trainees.map((t,i)=>{
+    const phColor = phaseColor(t.phaseKey);
+    const statusColor = t.isCompleted?'#34D399':t.overdue?'#F87171':'var(--gold2)';
+    return `<tr>
+      <td style="color:var(--muted);font-size:11px">${i+1}</td>
+      <td><div style="font-weight:500;color:var(--white)">${t.name}</div></td>
+      <td><code style="font-size:11px;color:var(--muted)">${t.empId}</code></td>
+      <td><div style="font-size:12px">${t.rm.name}</div></td>
+      <td><div style="font-size:11px;color:var(--muted)">📍 ${t.rm.region}</div></td>
+      <td><div style="font-size:12px">${fmt(t.jd)}</div></td>
+      <td><span class="day-pill" style="color:${phColor}">${t.isCompleted?'60+':t.dayNum}</span></td>
+      <td>${phaseBadge(t.phaseKey, t.phase)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress-outer" style="width:90px">
+            <div class="progress-inner" style="width:${t.pct}%;background:${phColor}"></div>
+          </div>
+          <span style="font-size:11px;font-weight:600;color:${phColor}">${t.pct}%</span>
+        </div>
+      </td>
+      <td style="font-size:11px;color:var(--muted)">${fmt(t.ph1End)}</td>
+      <td style="font-size:11px;color:var(--muted)">${fmt(t.ph2End)}</td>
+      <td style="font-size:11px;color:var(--muted)">${fmt(t.ph3End)}</td>
+      <td style="font-size:11px;color:var(--muted)">${fmt(t.complete)}</td>
+      <td>
+        <span style="font-size:12px;font-weight:600;color:${statusColor}">
+          ${t.isCompleted?'✅ Done':t.overdue?'⚠️ Overdue':'🔄 Active'}
+        </span>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="14" style="text-align:center;padding:30px;color:var(--muted)">No trainees match the filter.</td></tr>`;
+}
+
+// ── Switch Tab ─────────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-rm').style.display    = tab==='rm'?'':'none';
+  document.getElementById('tab-trainee').style.display = tab==='trainee'?'':'none';
+  if (tab==='trainee') renderTraineeTable();
+}
+
+// ── Filter Trainees ────────────────────────────────────────
+function filterTrainees(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTraineeTable();
+}
+
+// ── Render All ─────────────────────────────────────────────
+function renderAll() {
+  document.getElementById('todayBadge').textContent =
+    new Date().toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  const trainees = computeTrainees();
+  const rms = computeRMs(trainees);
+  renderKPI(trainees);
+  renderAlert(trainees);
+  renderRMCards(rms);
+  renderRMTable(rms);
+}
+
+// Boot
+renderAll();
+</script>
+</body>
+</html>
